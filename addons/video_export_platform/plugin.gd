@@ -23,7 +23,8 @@ func _get_plugin_name() -> String:
 	return PLUGIN_NAME
 
 func _get_plugin_icon() -> Texture2D:
-	return NovaTools.get_editor_icon_named("Animation", Vector2i.ONE * 16)
+	return NovaTools.get_editor_icon_named(VideoEditorExportPlatform.EDITOR_ICON_NAME,
+											Vector2i.ONE * 16)
 
 func _enter_tree() -> void:
 	_ensure_script_docs()

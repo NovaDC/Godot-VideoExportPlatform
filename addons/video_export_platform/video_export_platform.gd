@@ -23,6 +23,10 @@ enum Verbosity{
 	VERBOSE_ALL = 2,
 }
 
+## The name of the icon for this export plugin in the editor's [Theme],
+## as this plugin uses the editor theme itself instead of a local file for it's icon.
+const EDITOR_ICON_NAME := "Animation"
+
 ## The command line flag used with godot to export a movie.
 const GODOT_VIDEO_EXPORT_FLAG := "--write-movie"
 ## The command line flag used with godot to specify the project file to open.
@@ -139,7 +143,7 @@ func _get_name() -> String:
 
 func _get_logo() -> Texture2D:
 	var size = Vector2i.ONE * roundi(32 * EditorInterface.get_editor_scale())
-	return NovaTools.get_editor_icon_named("Animation", size)
+	return NovaTools.get_editor_icon_named(EDITOR_ICON_NAME, size)
 
 func _has_valid_export_configuration(preset:EditorExportPreset, _debug:bool) -> bool:
 	# forcefully ignore not allowing tool exports to be run as debug
@@ -157,7 +161,7 @@ func _has_valid_export_configuration(preset:EditorExportPreset, _debug:bool) -> 
 
 	return valid
 
-func _get_export_option_warning(preset: EditorExportPreset, option: StringName) -> String:
+func _get_export_option_warning(preset:EditorExportPreset, option:StringName) -> String:
 	var warn := ""
 	match(option):
 		"fps":
@@ -211,7 +215,7 @@ func _get_export_options() -> Array:
 		},
 	] + super._get_export_options()
 
-func _export_hook(preset: EditorExportPreset, path: String) -> int:
+func _export_hook(preset:EditorExportPreset, path:String) -> int:
 	var add_args = preset.get_or_env("additional_arguments", "")
 	if not typeof(add_args) == TYPE_NIL:
 		add_args = PackedStringArray(add_args)
