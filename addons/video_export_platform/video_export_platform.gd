@@ -146,6 +146,25 @@ func _has_valid_export_configuration(preset:EditorExportPreset, _debug:bool) -> 
 	# as debug video renders may be of genuine use
 	return super(preset, false)
 
+func _get_export_option_warning(preset: EditorExportPreset, option: StringName) -> String:
+	var warn := ""
+	match(option):
+		"fps":
+			if preset.get_or_env("fps", "") < 0:
+				warn = "Negative fps values will act the same as setting it to 0"
+		"resolution_override":
+			var res := preset.get_or_env("resolution_override", "")
+			if (res.x > 0) != (res.y > 0):
+				warn = ("resolution override will only have effect " +
+						"if both dimensions are set to a value larger than 0."
+						)
+		"additional_arguments":
+			if not preset.get_or_env("additional_arguments", "").is_empty():
+				warn = ("ensure that all additional arguments " +
+						"are properly formed and provided by a trusted source"
+						)
+	return warn
+
 func _get_export_options() -> Array:
 	return [
 		{
