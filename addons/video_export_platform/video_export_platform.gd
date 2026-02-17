@@ -4,18 +4,22 @@ extends ToolEditorExportPlatform
 
 ## VideoEditorExportPlatform
 ##
-## A simple godot export plugin that connects godot's video export mode to the export menu.
-## Requires the NovaTools plugin as a dependency.
+## A simple [EditorExportPlatformExtension] that provides a interface for video rendering
+## in the editor's export menu.
+## Requires the [NovaTools] plugin as a dependency. [NovaTools] does not need to be enabled.
 
-## TODO
+## Preset verbosity setting to use for the editor instance launched when exporting a video.
 enum Verbosity{
-	## TODO
+	## Suppresses most console output. Uses the [code]--quiet[/code] flag.
 	QUIET = -1,
-	## TODO
+	## Sets no flags. The default value.
 	UNSET = 0,
-	## TODO
+	## Prints additional fps counts to the console. Uses the [code]--print-fps[/code] flag.
 	VERBOSE_FPS = 1,
-	## TODO
+	## Includes everything used by [const Verbosity.VERBOSE_FPS],
+	## as well as printing additional information to the console.
+	## Uses all flags used by [const Verbosity.VERBOSE_FPS]
+	## as well the [code]--verbose[/code] flag.
 	VERBOSE_ALL = 2,
 }
 
@@ -23,18 +27,57 @@ enum Verbosity{
 const GODOT_VIDEO_EXPORT_FLAG := "--write-movie"
 ## The command line flag used with godot to specify the project file to open.
 const GODOT_PROJECT_PATH_FLAG := "--path"
-## TODO
+## The command line flag used with godot to set the fixed amount of frames
+## that ideally should be processed in a second.
 const GODOT_FIXED_FPS_FLAG := "--fixed-fps"
-## TODO
+## The command line flag used with godot to request a specified resolution be used.
 const GODOT_RESOLUTION_FLAG := "--resolution"
-## TODO
+## The command line flag used with godot to print fps information to the console.
 const GODOT_PRINT_FPS_FLAG := "--print-fps"
-## TODO
+## The command line flag used with godot to print additional information to the console.
 const GODOT_VERBOSE_FLAG := "--verbose"
-## TODO
+## The command line flag used with godot to print less information to the console.
 const GODOT_QUIET_FLAG := "--quiet"
 
-## TODO update docs
+## Exports the godot project file located at [param from_project] (defaulting to the currently
+## opened project in the editor) to a given movie located at [param to_path],
+## Returning the relevant [enum Error] code as a result.[br]
+## Godot determines what format of video to export
+## based on [param to_path]'s file extention.
+## There is currently no other option that allows for the specific
+## selection of what [MovieWriter] should be used.
+## See [MovieWriter] and
+## [url]https://docs.godotengine.org/en/stable/tutorials/animation/creating_movies.html[/url]
+## for more information.
+## [br]
+## [br]
+## When [param fps] is larger than 0, Godot will attempt to render the movie as close as possible to
+## that given frame rate.[br]
+## [br]
+## When both [param resolution_override]'s axis are larger than 0,
+## the movie will attempt to render at that given resolution.
+## Having only a single axis greater than 0 will result in an error.[br]
+## [br]
+## [param verbosity] specifies various presets of verbosity for the console
+## output to use. See [enum Verbosity] for more information about each option.[br]
+## [br]
+## [param additional_args] allows for further customization of
+## video rendering by supplying the provided arguments to the
+## rendering editor's cli when launched.[br]
+## These arguments are passed directly,
+## so duplicate arguments already supplied by other parts of the method
+## or characters/patterns that allow for cli command escaping are not filtered.[br]
+## It is the responsibility of the user to ensure these arguments are well formed and safe.
+## [br]
+## [b]NOTE[/b]: The console and editor instance opened when rendering
+## should always be closed [b]properly[/b]
+## (ex. using the window's close button,
+## having a script in the project that exits the program automatically,
+## etc...).[br]
+## Failing to do so will [b]abort the video rendering[/b] and possibly
+## [b]loose or corrupt[/b] the rendered video.[br]
+## [param additional_args] may be used to supply arguments
+## that allow for video rendering to automatically finish without the use of a script.[br]
 static func export_video(to_path:String,
 							from_project := "res://",
 							fps:int = 0,
@@ -81,7 +124,10 @@ static func export_video(to_path:String,
 
 	return await NovaTools.launch_editor_instance_async(args, "", stay_open)
 
-## TODO
+## Returns a [PackedStringArray] that specifies the builtin video export formats
+## supported.[br]
+## [b]NOTE[/b]: This cannot return any supported formats provided by addons,
+## as there is currently no features in Godot that could provide such an interface.
 static func get_builtin_video_export_extensions() -> PackedStringArray:
 	var exts := PackedStringArray(["avi", "png"])
 
