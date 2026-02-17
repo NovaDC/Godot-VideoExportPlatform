@@ -37,7 +37,17 @@ static func export_video(to_path:String,
 	
 	return await NovaTools.launch_editor_instance_async(args, "", stay_open)
 
-func _get_name():
+## TODO
+static func get_builtin_video_export_extensions() -> PackedStringArray:
+	var exts := PackedStringArray(["avi", "png"])
+
+	var ver_info := Engine.get_version_info()
+	if ver_info.major > 4 or (ver_info.major == 4 and ver_info.minor >= 5):
+		exts.append("ogv")
+
+	return exts
+
+func _get_name() -> String:
 	return "Video"
 
 func _get_logo():
@@ -68,5 +78,5 @@ func _export_hook(preset: EditorExportPreset, path: String):
 							  preset.get_or_env("keep_open", "")
 							 )
 
-func _get_binary_extensions(preset: EditorExportPreset):
-	return PackedStringArray(["avi", "png", "*"])
+func _get_binary_extensions(_preset:EditorExportPreset) -> PackedStringArray:
+	return get_builtin_video_export_extensions() + PackedStringArray(["*"])
