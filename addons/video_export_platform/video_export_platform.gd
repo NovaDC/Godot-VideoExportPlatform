@@ -144,7 +144,18 @@ func _get_logo() -> Texture2D:
 func _has_valid_export_configuration(preset:EditorExportPreset, _debug:bool) -> bool:
 	# forcefully ignore not allowing tool exports to be run as debug
 	# as debug video renders may be of genuine use
-	return super(preset, false)
+	var valid:bool = super(preset, false)
+
+	var main_loop_type = ProjectSettings.get_setting_with_override("application/run/main_loop_type")
+	if main_loop_type == "SceneTree":
+		# then a main scene should be set for a movie...
+		var main_scene = ProjectSettings.get_setting_with_override("application/run/main_scene")
+		main_scene = main_scene.strip_edges()
+		if main_scene.is_empty() or not ResourceLoader.exists(main_scene):
+			add_config_error("Main scene must be set for video exporting.")
+			valid = false
+
+	return valid
 
 func _get_export_option_warning(preset: EditorExportPreset, option: StringName) -> String:
 	var warn := ""
