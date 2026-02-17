@@ -3,38 +3,82 @@ class_name VideoEditorExportPlatform
 extends ToolEditorExportPlatform
 
 ## VideoEditorExportPlatform
-## 
+##
 ## A simple godot export plugin that connects godot's video export mode to the export menu.
 ## Requires the NovaTools plugin as a dependency.
+
+## TODO
+enum Verbosity{
+	## TODO
+	QUIET = -1,
+	## TODO
+	UNSET = 0,
+	## TODO
+	VERBOSE_FPS = 1,
+	## TODO
+	VERBOSE_ALL = 2,
+}
 
 ## The command line flag used with godot to export a movie.
 const GODOT_VIDEO_EXPORT_FLAG := "--write-movie"
 ## The command line flag used with godot to specify the project file to open.
 const GODOT_PROJECT_PATH_FLAG := "--path"
-## The command line flag used with godot when exporting a movie of how many seconds to quit after.
-const GODOT_QUIT_AFTER_FLAG := "--quit-after"
+## TODO
+const GODOT_FIXED_FPS_FLAG := "--fixed-fps"
+## TODO
+const GODOT_RESOLUTION_FLAG := "--resolution"
+## TODO
+const GODOT_PRINT_FPS_FLAG := "--print-fps"
+## TODO
+const GODOT_VERBOSE_FLAG := "--verbose"
+## TODO
+const GODOT_QUIET_FLAG := "--quiet"
 
-## Exports the godot project file located at [param from_project] (defaulting to the currently
-## opened project in the editor) to a given movie located at [param to_path].[br]
-## When [param quit_after] is larger than 0, godot will quit filming after the
-## set amount of seconds. If this is negative, it will film until the window doing
-## the filming is closed by the user.[br]
-## Note: Godot determines what format of video to export
-## based on [param to_path]'s file extention. See [MovieWriter] for more information.
+## TODO update docs
 static func export_video(to_path:String,
-						 quit_after:int = -1,
-						 from_project := ProjectSettings.globalize_path("res://"),
-						 stay_open := false
-						) -> Error:
-	var args := [GODOT_VIDEO_EXPORT_FLAG,
-				 ProjectSettings.globalize_path(to_path),
-				 GODOT_PROJECT_PATH_FLAG,
-				 from_project,
-				]
-	if quit_after > 0:
-		args.append(GODOT_QUIT_AFTER_FLAG)
-		args.append(str(quit_after))
-	
+							from_project := "res://",
+							fps:int = 0,
+							resolution_override := Vector2i.ZERO,
+							verbosity:Verbosity = Verbosity.UNSET,
+							additional_args := PackedStringArray(),
+							stay_open := false,
+							) -> int:
+
+	to_path = NovaTools.normalize_path_absolute(to_path, false)
+	from_project = NovaTools.normalize_path_absolute(from_project, false)
+	if not DirAccess.dir_exists_absolute(from_project) and from_project.get_file() == "project.godot":
+		from_project = from_project.get_base_dir()
+
+	if not DirAccess.dir_exists_absolute(from_project):
+		return ERR_FILE_NOT_FOUND
+
+	if DirAccess.dir_exists_absolute(to_path):
+		return ERR_ALREADY_EXISTS
+
+	var args := PackedStringArray([GODOT_VIDEO_EXPORT_FLAG,
+							to_path,
+							GODOT_PROJECT_PATH_FLAG,
+							from_project,
+							])
+	args += additional_args
+
+	if resolution_override.x > 0 and resolution_override.y > 0:
+		args.append(GODOT_RESOLUTION_FLAG)
+		args.append("%dx%d" % [resolution_override.x, resolution_override.y])
+	elif not (resolution_override.x <= 0 and resolution_override.y <= 0):
+		return ERR_PARAMETER_RANGE_ERROR
+
+	if verbosity < 0:
+		args.append(GODOT_QUIET_FLAG)
+	elif verbosity > 0:
+		args.append(GODOT_PRINT_FPS_FLAG)
+		if verbosity >= Verbosity.VERBOSE_ALL:
+			args.append(GODOT_VERBOSE_FLAG)
+
+	if fps > 0:
+		args.append(GODOT_FIXED_FPS_FLAG)
+		args.append(str(fps))
+
 	return await NovaTools.launch_editor_instance_async(args, "", stay_open)
 
 ## TODO
@@ -54,15 +98,38 @@ func _get_logo() -> Texture2D:
 	var size = Vector2i.ONE * roundi(32 * EditorInterface.get_editor_scale())
 	return NovaTools.get_editor_icon_named("Animation", size)
 
-func _get_platform_features():
-	return super._get_platform_features() + PackedStringArray(["video"])
+func _has_valid_export_configuration(preset:EditorExportPreset, _debug:bool) -> bool:
+	# forcefully ignore not allowing tool exports to be run as debug
+	# as debug video renders may be of genuine use
+	return super(preset, false)
 
-func _get_export_options():
+func _get_export_options() -> Array:
 	return [
 		{
-			"name": "quit_after",
+			"name": "fps",
 			"type": TYPE_INT,
-			"default_value": -1
+			"default_value": 0,
+			"hint": PROPERTY_HINT_RANGE,
+			"hint_string": "0,1024,1,or_greater,suffix:s"
+		},
+		{
+			"name": "resolution_override",
+			"type": TYPE_VECTOR2I,
+			"default_value": Vector2i.ZERO,
+			"hint": PROPERTY_HINT_RANGE,
+			"hint_string": "0,1024,1,or_greater,suffix:px"
+		},
+		{
+			"name": "additional_arguments",
+			"type": TYPE_PACKED_STRING_ARRAY,
+			"default_value": PackedStringArray()
+		},
+		{
+			"name": "verbosity",
+			"type": TYPE_INT,
+			"default_value": Verbosity.UNSET,
+			"hint": PROPERTY_HINT_ENUM,
+			"hint_string": NovaTools.make_int_enum_hint_string([Verbosity])
 		},
 		{
 			"name": "keep_open",
@@ -71,12 +138,24 @@ func _get_export_options():
 		},
 	] + super._get_export_options()
 
-func _export_hook(preset: EditorExportPreset, path: String):
+func _export_hook(preset: EditorExportPreset, path: String) -> int:
+	var add_args = preset.get_or_env("additional_arguments", "")
+	if not typeof(add_args) == TYPE_NIL:
+		add_args = PackedStringArray(add_args)
+	else:
+		add_args = PackedStringArray()
+
+	if not add_args.is_empty():
+		push_warning("Exporting video with custom arguments: '%s'." % ["' and '".join(add_args)])
+
 	return await export_video(path,
-							  preset.get_or_env("quit_after", ""),
-							  ProjectSettings.globalize_path("res://"),
-							  preset.get_or_env("keep_open", "")
-							 )
+								"res://",
+								preset.get_or_env("fps", ""),
+								preset.get_or_env("resolution_override", ""),
+								preset.get_or_env("verbosity", ""),
+								add_args,
+								preset.get_or_env("keep_open", "")
+								)
 
 func _get_binary_extensions(_preset:EditorExportPreset) -> PackedStringArray:
 	return get_builtin_video_export_extensions() + PackedStringArray(["*"])
