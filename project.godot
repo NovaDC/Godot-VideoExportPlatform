@@ -15,7 +15,10 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Video Export Platform"
-config/version="1.0.0.0"
+config/description="A simple EditorExportPlatformExtension that provides a interface for video rendering in the editor's export menu.
+
+Requires the NovaTools plugin as a dependency."
+config/version="v1.1.0.0"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 boot_splash/image="uid://chp5e51tmxmf0"
 config/icon="uid://chp5e51tmxmf0"
