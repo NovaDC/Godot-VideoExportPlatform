@@ -20,6 +20,14 @@ config/features=PackedStringArray("4.6", "GL Compatibility")
 boot_splash/image="uid://chp5e51tmxmf0"
 config/icon="uid://chp5e51tmxmf0"
 
+[autoload]
+
+TreeWatcher="*uid://byto6ql37kfie"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/novatools/plugin.cfg", "res://addons/video_export_platform/plugin.cfg")
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
