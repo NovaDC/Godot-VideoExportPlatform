@@ -50,8 +50,8 @@ static func get_builtin_video_export_extensions() -> PackedStringArray:
 func _get_name() -> String:
 	return "Video"
 
-func _get_logo():
-	var size = Vector2i.ONE * floori(32 * EditorInterface.get_editor_scale())
+func _get_logo() -> Texture2D:
+	var size = Vector2i.ONE * roundi(32 * EditorInterface.get_editor_scale())
 	return NovaTools.get_editor_icon_named("Animation", size)
 
 func _get_platform_features():
