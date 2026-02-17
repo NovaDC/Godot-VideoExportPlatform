@@ -55,8 +55,7 @@ const GODOT_QUIET_FLAG := "--quiet"
 ## that given frame rate.[br]
 ## [br]
 ## When both [param resolution_override]'s axis are larger than 0,
-## the movie will attempt to render at that given resolution.
-## Having only a single axis greater than 0 will result in an error.[br]
+## the movie will attempt to render at that given resolution.[br]
 ## [br]
 ## [param verbosity] specifies various presets of verbosity for the console
 ## output to use. See [enum Verbosity] for more information about each option.[br]
@@ -108,8 +107,6 @@ static func export_video(to_path:String,
 	if resolution_override.x > 0 and resolution_override.y > 0:
 		args.append(GODOT_RESOLUTION_FLAG)
 		args.append("%dx%d" % [resolution_override.x, resolution_override.y])
-	elif not (resolution_override.x <= 0 and resolution_override.y <= 0):
-		return ERR_PARAMETER_RANGE_ERROR
 
 	if verbosity < 0:
 		args.append(GODOT_QUIET_FLAG)
